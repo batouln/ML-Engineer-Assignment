@@ -125,6 +125,6 @@ Output:
 
 ###  Hardware & Runtime Environment
 
-- **GPU:** NVIDIA L4 (25 GB VRAM)  
+- **GPU:** NVIDIA L4 (24 GB VRAM)  
 - **Precision:** fp16 where applicable  
 - **Platform:** Local containerized setup (FastAPI + transformers)
