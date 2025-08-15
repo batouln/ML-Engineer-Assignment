@@ -61,7 +61,7 @@ I ensured a fair balance across both languages by splitting the data into dev/te
 I evaluated several LLMs using the same prompt structure, the collected datasets, and metric scripts (Accuracy, Macro-F1).
 All of these models are publicly available via the [Open Arabic LLM Leaderboard](https://huggingface.co/spaces/OALL/Open-Arabic-LLM-Leaderboard), hosted on Hugging Face Spaces.
 
-###  Evaluation Results
+###  Evaluation Results (mini leaderboard)
 
 | Model Name                                       | Accuracy | Macro-F1 |
 |--------------------------------------------------|----------|-----------|
@@ -123,3 +123,8 @@ Output:
 
 ---
 
+###  Hardware & Runtime Environment
+
+- **GPU:** NVIDIA L4 (25 GB VRAM)  
+- **Precision:** fp16 where applicable  
+- **Platform:** Local containerized setup (FastAPI + transformers)
