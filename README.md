@@ -67,7 +67,7 @@ All of these models are publicly available via the [Open Arabic LLM Leaderboard]
 |--------------------------------------------------|----------|-----------|
 | **Qwen3-8B-Base**                                | 0.3133   | 0.1687    |
 | **Qwen2.5-7B-Instruct**                          | 0.5700   | 0.5675    |
-| **C4AI R7B Arabic (Feb 2025)**                   | 0.3350   | 0.1745    |
+| **CohereLabs/c4ai-command-r7b-arabic-02-2025**                   | 0.3350   | 0.1745    |
 | **SILMA-9B (Silma AI)**                          | **0.6717** | **0.6475** |
 | **Fanar-1-9B**                                   | 0.5350   | 0.5199    |
 
