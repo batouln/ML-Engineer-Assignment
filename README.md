@@ -31,7 +31,7 @@ This project is a complete sentiment analysis pipeline using a **self-hosted LLM
 
 ##  Datasets Used
 
-We combined two datasets to create a multilingual benchmark:
+I combined two datasets to create a multilingual benchmark:
 
 ### 1. ArSAS (Arabic Sentiment Analysis)
 - Source: HuggingFace [arbml/ArSAS](https://huggingface.co/datasets/arbml/ArSAS)
@@ -48,17 +48,18 @@ We combined two datasets to create a multilingual benchmark:
   - Mapped labels: `{0,1 → Negative; 2 → Neutral; 3,4 → Positive}`
 
 ### Final Label Distribution
-We ensured a fair balance across both languages by splitting the data into dev/test:
+I ensured a fair balance across both languages by splitting the data into dev/test:
 
 ```
-✔ dev: 100 examples / label / language
+✔ dev: 100 examples / label / language, I used this dataset for quick debugging for each model
 ✔ test: 200 examples / label / language
 ```
 
 ---
 
 ##  Model Evaluation
-We evaluated several LLMs using the same prompt structure, dev/test sets, and metric scripts (Accuracy, Macro-F1).
+I evaluated several LLMs using the same prompt structure, the collected datasets, and metric scripts (Accuracy, Macro-F1).
+All of these models are publicly available via the [Open Arabic LLM Leaderboard](https://huggingface.co/spaces/OALL/Open-Arabic-LLM-Leaderboard), hosted on Hugging Face Spaces.
 
 ###  Evaluation Results
 
@@ -76,7 +77,7 @@ We evaluated several LLMs using the same prompt structure, dev/test sets, and me
 - Robust handling of Arabic dialects and English nuances.
 - Stable responses and deterministic decoding.
 
-This makes **SILMA-9B** the most suitable LLM for powering our REST API.
+This makes **SILMA-9B** the most suitable LLM based on this evaluation.
 
 ---
 
