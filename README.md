@@ -1,6 +1,6 @@
-# Arabic & English Sentiment Analysis REST API
+# ML APPLIED ENG. ASSIGNMENT
 
-This project is a complete sentiment analysis pipeline using a **self-hosted LLM** to predict the sentiment of Arabic and English sentences. It includes preprocessing scripts, an evaluation suite, model benchmarking, and a FastAPI server for inference.
+Part 1
 
 ---
 
@@ -97,10 +97,10 @@ This will save:
 - `data/english_cleaned.csv`
 - `data/eval_dev.csv`
 - `data/eval_test.csv`
-
+> **Note:** You don't need to run this script unless you want to regenerate the datasets from scratch.
 ### 3. Start the API Server
 ```bash
-uvicorn app.main:app --reload
+ uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 The API will be available at `http://localhost:8000/predict`
 
