@@ -4,7 +4,7 @@ import torch
 # -----------------------------
 # Model & dtype
 # -----------------------------
-MODEL_NAME = "silma-ai/SILMA-9B-Instruct-v1.0"  # switch here if needed
+MODEL_NAME = "QCRI/Fanar-1-9B-Instruct"  # switch here if needed
 DTYPE = (
     torch.bfloat16 if torch.cuda.is_available() and torch.cuda.is_bf16_supported()
     else (torch.float16 if torch.cuda.is_available() else torch.float32)
