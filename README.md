@@ -21,6 +21,9 @@ Part 1
 │   ├── english_cleaned.csv
 │   ├── eval_dev.csv
 │   └── eval_test.csv
+├── Candidates models/            # Model evaluation and configuration
+│   ├── candidaties_models.json   # Config for candidate models and datasets
+│   └── eval_model.py             # Generic script for evaluating model predictions
 ├── config.py            # Model name, label list, max tokens
 ├── test_api.py          # CLI testing script
 └── requirements.txt     # Dependencies
