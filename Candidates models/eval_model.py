@@ -1,118 +1,145 @@
-# scripts/eval_llm_sentiment.py
-
+# eval_model.py
 import os
 os.environ["TORCHDYNAMO_DISABLE"] = "1"
 
+import json
+from pathlib import Path
+
 import pandas as pd
-from tqdm import tqdm
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from sklearn.metrics import accuracy_score, f1_score
 import torch
 import torch._dynamo
-from huggingface_hub import login
-import json
+from huggingface_hub import login as hf_login
+from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 
-# Disable torch dynamo optimization
+from config import DTYPE
+from eval_helpers import load_model, evaluate_dataframe
+
 torch._dynamo.config.suppress_errors = True
 torch._dynamo.disable()
 
-# Load config
-with open("models_candidaties.json") as f:
-    config = json.load(f)
+# -----------------------------
+# Load candidaties_models.json .. here is we can find all the models i'm intersted in to evaluate
+# -----------------------------
+CFG_PATH = Path("candidaties_models.json")
+if not CFG_PATH.exists():
+    raise FileNotFoundError("Missing candidaties_models.json")
 
-HF_TOKEN = config.get("hf_token")
-MODEL_NAME = config.get("model_name")
-MODEL_TAG = config.get("model_tag", MODEL_NAME.split("/")[-1])
-RESULTS_DIR = config.get("results_dir", "results")
+with CFG_PATH.open("r", encoding="utf-8") as f:
+    cfg = json.load(f)
 
-datasets = config.get("datasets", [
-    {"path": "data/arsas_eval_test.csv", "lang": "ar", "tag": "arsas"},
-    {"path": "data/english_eval_test.csv", "lang": "en", "tag": "sst"}
-])
+hf_token   = cfg.get("hf_token")
+model_name = cfg["model_name"] 
+model_tag  = cfg.get("model_tag", Path(model_name).name)
+results_dir = Path(cfg.get("results_dir", "results")).resolve()
+datasets   = cfg.get("datasets", [])
 
-login(HF_TOKEN)
+if not datasets:
+    raise ValueError("No datasets provided in candidaties_models.json.")
 
-# Label mapping for Arabic (ArSAS)
-LABEL_MAP = {
-    0: "Negative",
-    1: "Neutral",
-    2: "Positive"
-}
-VALID_LABELS = {"Positive", "Neutral", "Negative"}
+if hf_token:
+    hf_login(hf_token)
 
-def generate_sentiment_prompt(text: str) -> str:
-    return f'''You are a helpful assistant. Your task is to classify the sentiment of the given text into one of the following categories:
-["Positive", "Neutral", "Negative"]
+# -----------------------------
+# Load model once
+# -----------------------------
+print(f"\n=== MODEL: {model_name} (tag: {model_tag}) ===")
+print(f"→ Device: {'cuda' if torch.cuda.is_available() else 'cpu'} | dtype: {DTYPE}")
+tokenizer, model = load_model(model_name, DTYPE)
 
-Text: {text}
+# Combined accumulators
+all_src, all_gold, all_pred, all_raw, all_times = [], [], [], [], []
+all_wall = 0.0
 
-Sentiment:
-'''
+# -----------------------------
+# Evaluate each dataset
+# -----------------------------
+for ds in datasets:
+    path = Path(ds["path"])
+    tag  = ds.get("tag", path.stem)
 
+    if not path.exists():
+        print(f"\n[WARN] Missing dataset: {path}")
+        continue
 
-# --- Load model ---
-def load_model(model_name=MODEL_NAME, dtype=torch.float16):
-    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-    model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype=dtype, trust_remote_code=True)
-    return tokenizer, model
+    print(f"\n=== Evaluating: {path} ({tag}) ===")
+    df = pd.read_csv(path)
 
-# --- Predict one ---
-@torch.no_grad()
-def predict_sentiment(prompt: str, tokenizer, model, max_new_tokens=10):
-    input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(model.device)
-    output_ids = model.generate(input_ids, max_new_tokens=max_new_tokens, do_sample=False, temperature=0.0)
-    decoded = tokenizer.decode(output_ids[0], skip_special_tokens=True)
-    return decoded.split("Sentiment:")[-1].strip()
+    y_true, y_pred, raw, times, metrics, timing = evaluate_dataframe(df, tokenizer, model, show_raw=3)
 
-# --- Clean prediction ---
-def clean_prediction(p):
-    if isinstance(p, str):
-        p = p.replace("[", "").replace("]", "").replace('"', "").replace("'", "").strip()
-        p = p.split()[0].capitalize()
-        if p not in VALID_LABELS:
-            return "Neutral"
-        return p
-    return "Neutral"
+    # Print metrics
+    if metrics:
+        print(f"\nAccuracy   : {metrics['accuracy']:.4f}")
+        print(f"F1 (macro): {metrics['f1_macro']:.4f}")
+        print("Confusion matrix (rows=true, cols=pred):")
+        print(metrics["cm"])
+    else:
+        print("[WARN] No valid labels for evaluation.")
 
-if __name__ == "__main__":
-    tokenizer, model = load_model()
-    all_rows = []
+    print(f"\nSpeed → total: {timing['total_time']:.2f}s | avg: {timing['avg_latency_ms']:.2f}ms | throughput: {timing['throughput_eps']:.2f}/s")
 
-    for d in datasets:
-        df = pd.read_csv(d["path"])
-        lang = d["lang"]
-        tag = d["tag"]
+    # Save per-dataset files with tag+model_tag suffix
+    prefix = path.with_suffix("")
+    preds_csv   = prefix.with_name(f"{prefix.name}_{model_tag}_preds.csv")
+    metrics_csv = prefix.with_name(f"{prefix.name}_{model_tag}_metrics.csv")
+    cm_csv      = prefix.with_name(f"{prefix.name}_{model_tag}_cm.csv")
 
-        if df["label"].dtype != object:
-            df["label"] = df["label"].map(LABEL_MAP)
+    pd.DataFrame({
+        "text": df["text"],
+        "label": df["label"],
+        "gold_norm": y_true,
+        "pred": y_pred,
+        "raw": raw,
+    }).to_csv(preds_csv, index=False, encoding="utf-8")
 
-        for _, row in tqdm(df.iterrows(), total=len(df), desc=f"Evaluating {tag.upper()}"):
-            text = row["text"]
-            label = row["label"]
-            prompt = generate_sentiment_prompt(text)
-            pred = predict_sentiment(prompt, tokenizer, model)
-            pred_clean = clean_prediction(pred)
-            all_rows.append({
-                "text": text,
-                "label": label,
-                "predicted": pred_clean,
-                "lang": lang,
-                "dataset": tag
-            })
+    if metrics:
+        pd.DataFrame([metrics]).to_csv(metrics_csv, index=False, encoding="utf-8")
+        pd.DataFrame(metrics["cm"],
+                     index=["Positive","Neutral","Negative"],
+                     columns=["Positive","Neutral","Negative"]).to_csv(cm_csv, encoding="utf-8")
 
-    all_df = pd.DataFrame(all_rows)
-    os.makedirs(RESULTS_DIR, exist_ok=True)
-    results_path = os.path.join(RESULTS_DIR, f"{MODEL_TAG}_all_results.csv")
-    all_df.to_csv(results_path, index=False)
+    print(f"[Saved] {preds_csv}, {metrics_csv}, {cm_csv}")
 
-    acc = accuracy_score(all_df["label"], all_df["predicted"])
-    f1 = f1_score(all_df["label"], all_df["predicted"], average="macro")
+    # Accumulate for combined
+    all_src.extend([path.name] * len(y_true))
+    all_gold.extend(y_true)
+    all_pred.extend(y_pred)
+    all_raw.extend(raw)
+    all_times.extend(times)
+    all_wall += timing["total_time"]
 
-    print("\n Combined Evaluation Results:")
-    print(f" Accuracy: {acc:.4f}")
-    print(f" F1-macro: {f1:.4f}")
+# -----------------------------
+# Combined across all datasets
+# -----------------------------
+print("\n=== Combined Results Across Datasets ===")
+valid_idx = [i for i,g in enumerate(all_gold) if g in ["Positive","Neutral","Negative"]]
+y_true_all = [all_gold[i] for i in valid_idx]
+y_pred_all = [all_pred[i] for i in valid_idx]
 
-    pd.DataFrame([{"model": MODEL_TAG, "accuracy": acc, "f1_macro": f1, "total_samples": len(all_df)}]) \
-        .to_csv(os.path.join(RESULTS_DIR, f"{MODEL_TAG}_metrics.csv"), index=False)
+if y_true_all:
+    acc = accuracy_score(y_true_all, y_pred_all)
+    f1m = f1_score(y_true_all, y_pred_all, average="macro")
+    cm  = confusion_matrix(y_true_all, y_pred_all, labels=["Positive","Neutral","Negative"])
 
-    print(f" Saved predictions to {results_path}")
+    avg_ms = (sum(all_times)/len(all_times)*1000) if all_times else 0.0
+    throughput = len(all_gold)/all_wall if all_wall > 0 else 0.0
+
+    print(f"Accuracy   : {acc:.4f}")
+    print(f"F1 (macro): {f1m:.4f}")
+    print("Confusion matrix:")
+    print(cm)
+
+    results_dir.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame({
+        "dataset": all_src,
+        "gold_norm": all_gold,
+        "pred": all_pred,
+        "raw": all_raw,
+    }).to_csv(results_dir/f"{model_tag}_all_results.csv", index=False, encoding="utf-8")
+    pd.DataFrame([{
+        "accuracy": acc,
+        "f1_macro": f1m,
+        "avg_latency_ms": avg_ms,
+        "throughput_eps": throughput,
+    }]).to_csv(results_dir/f"{model_tag}_metrics.csv", index=False, encoding="utf-8")
+    pd.DataFrame(cm, index=["Positive","Neutral","Negative"], columns=["Positive","Neutral","Negative"])\
+        .to_csv(results_dir/f"{model_tag}_cm.csv", encoding="utf-8")
