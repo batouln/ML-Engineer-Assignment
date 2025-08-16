@@ -8,8 +8,7 @@ Part 1
 
 ```
 .
-├── app/                 # FastAPI app for inference
-│   └── main.py
+├── app.py                 # FastAPI app for inference
 ├── models/              # Predictor class wrapping the LLM
 │   └── predictor.py
 ├── utils/               # Helpers for prompts and postprocessing
@@ -30,8 +29,7 @@ Part 1
 ---
 
 ##  Datasets Used
-
-I combined two datasets to create a multilingual benchmark:
+I combined two datasets to build a multilingual benchmark for evaluating and selecting the most effective model for sentiment analysis tasks:
 
 ### 1. ArSAS (Arabic Sentiment Analysis)
 - Source: HuggingFace [arbml/ArSAS](https://huggingface.co/datasets/arbml/ArSAS)
@@ -110,7 +108,7 @@ python test_api.py "تواصل العميل مع مركز خدمة العملا�
 ```
 
 ---
-
+> **Note:** Use another terminal to execute the sentiment detection.
 ##  Prediction Format
 Input:
 ```json
@@ -126,5 +124,5 @@ Output:
 ###  Hardware & Runtime Environment
 
 - **GPU:** NVIDIA L4 (24 GB VRAM)  
-- **Precision:** fp16 where applicable  
+- **Precision:** fp16  
 - **Platform:** Local containerized setup (FastAPI + transformers)

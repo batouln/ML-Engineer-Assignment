@@ -1,0 +1,18 @@
+{
+  "hf_token": "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",
+  "model_name": "inceptionai/jais-adapted-7b",
+  "model_tag": "jais-adapted-7b",
+  "results_dir": "results",
+  "datasets": [
+    {
+      "path": "Data/arsas_eval_test.csv",
+      "lang": "ar",
+      "tag": "arsas"
+    },
+    {
+      "path": "Data/english_eval_test.csv",
+      "lang": "en",
+      "tag": "sst"
+    }
+  ]
+}
