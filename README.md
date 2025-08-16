@@ -64,13 +64,15 @@ All of these models are publicly available via the [Open Arabic LLM Leaderboard]
 
 ###  Evaluation Results (mini leaderboard)
 
-| Model Name                                       | Accuracy | Macro-F1 |
-|--------------------------------------------------|----------|-----------|
-| **Qwen3-8B-Base**                                | 0.3133   | 0.1687    |
-| **Qwen2.5-7B-Instruct**                          | 0.5700   | 0.5675    |
-| **CohereLabs/c4ai-command-r7b-arabic-02-2025**                   | 0.3350   | 0.1745    |
-| **SILMA-9B (Silma AI)**                          | **0.6717** | **0.6475** |
-| **Fanar-1-9B**                                   | 0.5350   | 0.5199    |
+| Model Name | Accuracy | Macro-F1 |
+|------------|----------|-----------|
+| [Qwen3-8B-Base](https://huggingface.co/Qwen/Qwen3-8B-Base) | 0.3133 | 0.1687 |
+| [Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct) | 0.5700 | 0.5675 |
+| [CohereLabs/c4ai-command-r7b-arabic-02-2025](https://huggingface.co/CohereLabs/c4ai-command-r7b-arabic-02-2025) | 0.3350 | 0.1745 |
+| [SILMA-9B (Silma AI)](https://huggingface.co/silma-ai/SILMA-9B-Instruct-v1.0) | **0.6717** | **0.6475** |
+| [Fanar-1-9B](https://huggingface.co/QCRI/Fanar-1-9B) | 0.5350 | 0.5199 |
+
+
 
 ###  Why SILMA-9B?
 
