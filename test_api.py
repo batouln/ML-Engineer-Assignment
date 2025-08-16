@@ -1,22 +1,38 @@
-
+# simple_predict.py
 import sys
 import requests
 
+URL = "http://127.0.0.1:8000/predict"
+DEFAULT_TEXT = "الخدمة رائعة جدا ومميزة للغاية"
+
 def main():
-    url = "http://localhost:8000/predict"
+    # 1) text from command line, else use a nice default
+    text = " ".join(sys.argv[1:]).strip() or DEFAULT_TEXT
 
-    text = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "الخدمة رائعة جدا ومميزة للغاية"
+    print(f"→ Server: {URL}")
+    print(f"→ Text  : {text}\n")
 
-    response = requests.post(url, json={"text": text})
+    try:
+        r = requests.post(URL, json={"text": text}, timeout=10)
+    except Exception as e:
+        print(f" Unable to reach server: {e}")
+        return
 
-    if response.status_code == 200:
-        try:
-            sentiment = response.json()["sentiment"]  
-            print("Predicted Sentiment:", sentiment)
-        except Exception as e:
-            print("Failed to parse JSON:", response.text)
+    if r.status_code != 200:
+        print(f" Server error {r.status_code}: {r.text}")
+        return
+
+    try:
+        data = r.json()
+    except Exception:
+        print(f"✖ Invalid JSON from server:\n{r.text}")
+        return
+
+    sentiment = data.get("sentiment")
+    if sentiment:
+        print(f" Predicted Sentiment: {sentiment}")
     else:
-        print("Error:", response.status_code, response.text)
+        print(f" Response missing 'sentiment': {data}")
 
 if __name__ == "__main__":
     main()
