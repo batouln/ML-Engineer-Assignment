@@ -11,7 +11,7 @@ def main():
 
     if response.status_code == 200:
         try:
-            sentiment = response.json()["sentiment"]  # ✅ Correctly extract the sentiment from JSON
+            sentiment = response.json()["sentiment"]  
             print("Predicted Sentiment:", sentiment)
         except Exception as e:
             print("Failed to parse JSON:", response.text)
