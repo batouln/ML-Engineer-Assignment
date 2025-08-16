@@ -2,8 +2,8 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 from config import MODEL_NAME, DTYPE, GENERATION_KWARGS
-from prompt_builder import build_prompt
-from postprocessor import extract_label
+from utils.prompt_builder import build_prompt
+from utils.postprocessor import extract_label
 
 class SentimentPredictor:
     def __init__(self):
