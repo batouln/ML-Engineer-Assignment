@@ -112,15 +112,13 @@ Sorted by Accuracy & Macro-F1 (low → high):
 
 ---
 
-### Why Fanar-1-9B-Instruct?
-### Why Fanar-1-9B-Instruct?
+### Why Fanar-1-9B-Instruct?  
+- Delivered the **highest accuracy and F1** across our combined Arabic + English evaluation set.  
+- Consistently better at handling nuanced sentiment (sarcasm, subtle negatives).  
+- Slightly slower than Qwen2, but still competitive for real-time APIs (<300 ms average).  
 
-Across our benchmarks, Fanar delivered the **highest accuracy (73.2%) and macro-F1 (72.9%)** on the combined Arabic + English sentiment evaluation set.  
-Although not the fastest model (≈ 257 ms average latency vs Qwen2’s 178 ms), Fanar consistently produced the most reliable predictions.  
-
-For real-time REST APIs, this trade-off favors Fanar as the **default production choice**: quality is prioritized while latency remains competitive (<300 ms).  
-
-If ultra-low latency is the primary requirement, **Qwen2** is a strong alternative, while **Qwen3** offers a balance between speed and accuracy.
+ **Production choice:** Fanar is the default (quality-first).  
+ **Alternative:** Qwen2 is a good option when **ultra-low latency** is critical (e.g., very high-throughput, sub-200ms required).  
 
 
 #### Strengths
