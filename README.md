@@ -122,11 +122,10 @@ Sorted by Accuracy & Macro-F1 (low → high):
 
 
 #### Strengths
-- **Top accuracy and F1** across both teh collected Arabic and English datasets  
-- **Handles nuance**: distinguishes descriptive text from opinionated sentiment  
+- **Top accuracy and F1** across both the collected Arabic and English datasets  
+- **Context-aware**: avoids confusing neutral statements with positive or negative ones  
 - **Consistent in negatives**: reliably flags negative sentiment, including sarcasm and insults  
-- **Fastest latency** among tested models (256 ms/example)  
-
+- **Bilingual strength**: performs well on both Arabic and English text   
 ---
 
 #### Confusion Matrix (Fanar-1-9B-Instruct)
