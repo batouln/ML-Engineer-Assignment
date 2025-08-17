@@ -90,8 +90,17 @@ To ensure **fair and fast comparison across models**, I constructed:
 ---
 
  This benchmark ensures that all models are tested on **equal footing**, across both **Arabic dialects/MSA** and **English reviews**, with no class imbalance.
+> **Note:** While balanced and controlled, this dataset may not fully reflect **real-world call transcript cases**. It should be seen as a **sufficient initial benchmark** for choosing models, with the expectation that additional **fine-tuning and prompt adjustments** will be needed for production scenarios.
 
 
+
+---
+
+###  Hardware & Runtime Environment
+
+- **GPU:** NVIDIA L4 (24 GB VRAM)  
+- **Precision:** fp16  
+- **Platform:** Local containerized setup (FastAPI + transformers)
 ---
 
 ## Model Evaluation
@@ -110,6 +119,7 @@ Sorted by Accuracy & Macro-F1 (low → high):
 | [SILMA-9B (Silma AI)](https://huggingface.co/silma-ai/SILMA-9B-Instruct-v1.0) | 0.6858 | 0.6575 | 264.0 |
 | [Fanar-1-9B-Instruct](https://huggingface.co/QCRI/Fanar-1-9B-Instruct) | **0.7317** | **0.7296** | **256.7** |
 
+> **Note:** Avg Latency (ms/example) = End-to-end time to process a single input through the full pipeline (preprocessing → model inference → decoding → postprocessing).
 ---
 
 ### Why Fanar-1-9B-Instruct?  
@@ -138,23 +148,22 @@ Sorted by Accuracy & Macro-F1 (low → high):
 
 ---
 
-#### Example Predictions
+### Error Analysis
 
-- **English (Positive detection)**  
-  *"arguably the best script that besson has written in years"* → **Positive** ✅  
-
-- **English (Nuance handling)**  
-  *"a full experience, a love story and a murder mystery"* → **Neutral** ✅ (descriptive, not opinionated)  
-
-- **Arabic (Negative clarity)**  
-  *"مع احترامي لخالد علي الكومبارس الكبير..."* → **Negative** ✅ (sarcasm caught correctly)  
-
-- **Arabic (Neutral balance)**  
-  *"الربيع العربي أقسام الأول منها قامت به الشعوب..."* → **Neutral** ✅ (did not overfit to Positive/Negative)  
+| Language | Case Type                        | Example Text                                                                                                                                      | Gold Label | Predicted | Result |
+|----------|----------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|------------|-----------|--------|
+| English  | Clear Positive (correct)         | *"arguably the best script that besson has written in years ."*                                                                                  | Positive   | Positive  | ✅     |
+| English  | Subtle Positive → Neutral (error)| *"a full experience , a love story and a murder mystery that expands into a meditation on the deep deceptions of innocence ."*                    | Positive   | Neutral   | ❌     |
+| Arabic   | Clear Negative (correct)         | *"مع احترامي لخالد علي الكومبارس الكبير المطالب بمصرية تيران وصنافيرعودة د مرسي الان اهمحتي يتم الغاء كافة الاتفاقيات التي ابرمهاالانقلاب"* | Negative   | Negative  | ✅     |
+| Arabic   | Strong Negative → Neutral (error)| *"الربيع العربي أقسام الأول منها قامت به الشعوب على الطغاةالثاني ستقوم به الطغاة على بعضها البعض"*                                               | Negative   | Neutral   | ❌     |
 
 ---
 
- This balance of **top raw performance, speed, and nuanced handling** makes **Fanar-1-9B** an excellent choice for sentiment analysis in a real-world REST API.
+When looking at overall errors:  
+- **English produced more misclassifications (188)** than **Arabic (134)**.  
+- This means the model struggles more with **English subtleties**, while in Arabic the main issue is **dilution of strong negativity**.  
+
+
 
 
 ##  How to Run the Project
@@ -179,7 +188,7 @@ This will save:
  uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 The API will be available at `http://localhost:8000/predict`
-
+> **Note:** The project is designed to run locally. The API is not deployed or hosted on any external server.
 ### 4. Run the CLI Test
 ```bash
 python test_api.py "تواصل العميل مع مركز خدمة العملاء للحصول على شهادة رصيد حسابها. تم توجيهها إلى الموقع الإلكتروني للبنك لإصدار الشهادة وتوجيهها إلى جهة معينة"
@@ -197,10 +206,3 @@ Output:
 "Neutral"
 ```
 
----
-
-###  Hardware & Runtime Environment
-
-- **GPU:** NVIDIA L4 (24 GB VRAM)  
-- **Precision:** fp16  
-- **Platform:** Local containerized setup (FastAPI + transformers)
